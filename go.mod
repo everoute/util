@@ -1,4 +1,4 @@
-module github.com/everoute/expected
+module github.com/everoute/util
 
 go 1.20
 

@@ -6,7 +6,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/everoute/expected"
+	"github.com/everoute/util/expected"
 )
 
 func TestValue(t *testing.T) {
