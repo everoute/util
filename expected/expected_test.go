@@ -4,9 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/onsi/gomega"
-
 	"github.com/everoute/util/expected"
+	. "github.com/onsi/gomega"
 )
 
 func TestValue(t *testing.T) {
