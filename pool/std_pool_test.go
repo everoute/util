@@ -21,16 +21,18 @@ func TestStdPool(t *testing.T) {
 
 	customChan := make(chan *data4096, 1000)
 	var allocCount uint32 = 0
-	pool := pool.NewStdPoll[data4096](func() any {
+	p := pool.NewStdPoll[data4096](func() any {
 		atomic.AddUint32(&allocCount, 1)
 		return new(data4096)
 	})
+	var putter pool.Putter[data4096] = p
+	var getter pool.Getter[data4096] = p
 
 	for i := 0; i < 100; i++ {
 		go func() {
 			<-start
 			for i := 0; i < 10000; i++ {
-				customChan <- pool.Get()
+				customChan <- getter.Get()
 			}
 		}()
 	}
@@ -42,7 +44,7 @@ func TestStdPool(t *testing.T) {
 			<-start
 			for i := 0; i < 100000; i++ {
 				ptr := <-customChan
-				pool.Put(ptr)
+				putter.Put(ptr)
 			}
 			wg.Done()
 		}()
