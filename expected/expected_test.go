@@ -4,8 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/everoute/util/expected"
 	. "github.com/onsi/gomega"
+
+	"github.com/everoute/util/expected"
 )
 
 func TestEmpty(t *testing.T) {
