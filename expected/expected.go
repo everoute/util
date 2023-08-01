@@ -115,6 +115,7 @@ func Unwrap[Arg, Res any](fn func(Arg) Expected[Res]) func(Arg) (Res, error) {
 
 func (e *Expected[T]) SetValue(value T) {
 	e.value = value
+	e.err = nil
 	e.state = hasValue
 }
 
