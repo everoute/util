@@ -43,7 +43,7 @@ func (l *DQL) Clauses() Clauses {
 	}
 	cs = append(cs, &l.Select)
 	if l.From.Valid() {
-		cs = append(cs, &l.From)
+		cs = append(cs, l.From)
 	}
 	if l.Where != nil {
 		cs = append(cs, &whereClause{Where: l.Where})
@@ -162,57 +162,73 @@ func (c *Select) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int
 	return nil
 }
 
-type Table interface {
-	Clause
-}
-
 type From struct {
-	Table Table
+	Table Clause
 	Name  string
 }
 
-func (c *From) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
-	var err error
+func (c From) Valid() bool {
+	return c.Name != "" || c.Table != nil
+}
+
+func FromName(name string) From {
+	return From{Name: name}
+}
+
+func FromTable(table Clause) From {
+	return From{Table: table}
+}
+
+func (c From) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+	if c.Name != "" {
+		return parseFromTableName(c.Name, sqlWriter, argWriter, level)
+	}
 	if c.Table != nil {
-		err = WriteStringWithSpace(sqlWriter, "FROM (", level)
-		if err != nil {
-			return err
-		}
-		err = EndLine(sqlWriter, CompactLevel(level))
-		if err != nil {
-			return err
-		}
-		err = c.Table.Parse(sqlWriter, argWriter, NextLevel(level))
-		if err != nil {
-			return err
-		}
-		err = WriteStringWithSpace(sqlWriter, ")", level)
-		if err != nil {
-			return err
-		}
-		err = EndLine(sqlWriter, CompactLevel(level))
-		if err != nil {
-			return err
-		}
-	} else if c.Valid() {
-		err = WriteStringWithSpace(sqlWriter, "FROM ", level)
-		if err != nil {
-			return err
-		}
-		err = WriteString(sqlWriter, c.Name)
-		if err != nil {
-			return err
-		}
-		err = EndLine(sqlWriter, CompactLevel(level))
-		if err != nil {
-			return err
-		}
+		return parseFromSubTable(c.Table, sqlWriter, argWriter, level)
 	}
 	return nil
 }
 
-func (c *From) Valid() bool {
-	return c.Table != nil || c.Name != ""
+func parseFromTableName(name string, sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+	var err error
+	err = WriteStringWithSpace(sqlWriter, "FROM ", level)
+	if err != nil {
+		return err
+	}
+	err = WriteString(sqlWriter, name)
+	if err != nil {
+		return err
+	}
+	err = EndLine(sqlWriter, CompactLevel(level))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func parseFromSubTable(table Clause, sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+	var err error
+	err = WriteStringWithSpace(sqlWriter, "FROM (", level)
+	if err != nil {
+		return err
+	}
+	err = EndLine(sqlWriter, CompactLevel(level))
+	if err != nil {
+		return err
+	}
+	err = table.Parse(sqlWriter, argWriter, NextLevel(level))
+	if err != nil {
+		return err
+	}
+	err = WriteStringWithSpace(sqlWriter, ")", level)
+	if err != nil {
+		return err
+	}
+	err = EndLine(sqlWriter, CompactLevel(level))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type NamePosition int
@@ -224,7 +240,7 @@ const (
 
 type NamedTable struct {
 	Name  string
-	Table Table
+	Table Clause
 }
 
 type With interface {

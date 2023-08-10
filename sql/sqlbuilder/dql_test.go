@@ -83,9 +83,7 @@ func TestSelect(t *testing.T) {
 func TestFrom(t *testing.T) {
 	RegisterTestingT(t)
 	t.Run("from table name", func(t *testing.T) {
-		c := sqlbuilder.From{
-			Name: "demo_table",
-		}
+		c := sqlbuilder.FromName("demo_table")
 		buff := bytes.NewBufferString("")
 		var argWriter = NewArgWriter(0)
 		err := c.Parse(buff, argWriter, 0)
@@ -105,13 +103,9 @@ func TestFrom(t *testing.T) {
 					"max(y) AS max_y",
 				},
 			},
-			From: sqlbuilder.From{
-				Name: "demo_table",
-			},
+			From: sqlbuilder.FromName("demo_table"),
 		}
-		c := sqlbuilder.From{
-			Table: &dql,
-		}
+		c := sqlbuilder.FromTable(&dql)
 		buff := bytes.NewBufferString("")
 		var argWriter = NewArgWriter(0)
 		err := c.Parse(buff, argWriter, 0)
@@ -148,9 +142,7 @@ func TestDQL(t *testing.T) {
 					"max(y) AS max_y",
 				},
 			},
-			From: sqlbuilder.From{
-				Name: "demo",
-			},
+			From: sqlbuilder.FromName("demo_table"),
 			Where: []sqlbuilder.Condition{
 				sqlbuilder.NewCondition("x >= 2"),
 				sqlbuilder.NewCondition("y != 'a'"),
@@ -167,7 +159,7 @@ func TestDQL(t *testing.T) {
 		err := dql.Parse(buff, nil, sqlbuilder.Format)
 		Expect(err).Should(Succeed())
 		res := buff.String()
-		ept := "WITH\na AS (\n  SELECT * FROM demo.A\n),\nb AS (\n  SELECT * FROM demo.B\n)\nSELECT\n  max(x) AS max_x,\n  max(y) AS max_y\nFROM demo\nWHERE\n  x >= 2\n  AND y != 'a'\nGROUP BY x\nORDER BY y\nLIMIT 1\nQWERTY\nasdfgh\n"
+		ept := "WITH\na AS (\n  SELECT * FROM demo.A\n),\nb AS (\n  SELECT * FROM demo.B\n)\nSELECT\n  max(x) AS max_x,\n  max(y) AS max_y\nFROM demo_table\nWHERE\n  x >= 2\n  AND y != 'a'\nGROUP BY x\nORDER BY y\nLIMIT 1\nQWERTY\nasdfgh\n"
 		Expect(res).To(Equal(ept))
 	})
 	t.Run("without space", func(t *testing.T) {
@@ -191,9 +183,7 @@ func TestDQL(t *testing.T) {
 					"max(y) AS max_y",
 				},
 			},
-			From: sqlbuilder.From{
-				Name: "demo",
-			},
+			From: sqlbuilder.FromName("demo_table"),
 			Where: []sqlbuilder.Condition{
 				sqlbuilder.NewCondition("x >= 2"),
 				sqlbuilder.NewCondition("y != 'a'"),
@@ -210,7 +200,7 @@ func TestDQL(t *testing.T) {
 		err := dql.Parse(buff, nil, sqlbuilder.Compact)
 		Expect(err).Should(Succeed())
 		res := buff.String()
-		ept := "WITH a AS ( SELECT * FROM demo.A ), b AS ( SELECT * FROM demo.B ) SELECT max(x) AS max_x, max(y) AS max_y FROM demo WHERE x >= 2 AND y != 'a' GROUP BY x ORDER BY y LIMIT 1 QWERTY asdfgh "
+		ept := "WITH a AS ( SELECT * FROM demo.A ), b AS ( SELECT * FROM demo.B ) SELECT max(x) AS max_x, max(y) AS max_y FROM demo_table WHERE x >= 2 AND y != 'a' GROUP BY x ORDER BY y LIMIT 1 QWERTY asdfgh "
 		Expect(res).To(Equal(ept))
 	})
 }
