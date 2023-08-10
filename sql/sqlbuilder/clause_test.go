@@ -9,7 +9,6 @@ import (
 
 	"github.com/everoute/util/sql/sqlbuilder"
 	. "github.com/onsi/gomega"
-	"k8s.io/klog"
 )
 
 type fixedBuilder struct {
@@ -52,11 +51,9 @@ func TestCustomClause(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "abc"
-		klog.Infof("expect:\n%s\nresult:\n%s\n", ept, res)
 		Expect(res).To(Equal(ept))
 		resArgs := argWriter.Args
 		eptArgs := []sqlbuilder.Arg{1, "2"}
-		klog.Infof("arg expect:\n%+v\nresult:\n%+v\n", eptArgs, resArgs)
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("on error", func(t *testing.T) {
@@ -80,11 +77,9 @@ func TestSimpleClause(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "abc\n"
-		klog.Infof("expect:\n%s\nresult:\n%s\n", ept, res)
 		Expect(res).To(Equal(ept))
 		resArgs := argWriter.Args
 		eptArgs := []sqlbuilder.Arg{1, "2"}
-		klog.Infof("arg expect:\n%+v\nresult:\n%+v\n", eptArgs, resArgs)
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("don't new line", func(t *testing.T) {
@@ -95,11 +90,9 @@ func TestSimpleClause(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "abc"
-		klog.Infof("expect:\n%s\nresult:\n%s\n", ept, res)
 		Expect(res).To(Equal(ept))
 		resArgs := argWriter.Args
 		eptArgs := []sqlbuilder.Arg{1, "2"}
-		klog.Infof("arg expect:\n%+v\nresult:\n%+v\n", eptArgs, resArgs)
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("on error", func(t *testing.T) {
@@ -121,11 +114,9 @@ func TestAddLevel(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "  abc\n"
-		klog.Infof("expect:\n%s\nresult:\n%s\n", ept, res)
 		Expect(res).To(Equal(ept))
 		resArgs := argWriter.Args
 		eptArgs := []sqlbuilder.Arg{1, "2"}
-		klog.Infof("arg expect:\n%+v\nresult:\n%+v\n", eptArgs, resArgs)
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("don't new line", func(t *testing.T) {
@@ -136,11 +127,9 @@ func TestAddLevel(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "  abc"
-		klog.Infof("expect:\n%s\nresult:\n%s\n", ept, res)
 		Expect(res).To(Equal(ept))
 		resArgs := argWriter.Args
 		eptArgs := []sqlbuilder.Arg{1, "2"}
-		klog.Infof("arg expect:\n%+v\nresult:\n%+v\n", eptArgs, resArgs)
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("on error", func(t *testing.T) {

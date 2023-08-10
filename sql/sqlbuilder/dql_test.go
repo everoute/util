@@ -6,7 +6,6 @@ import (
 
 	"github.com/everoute/util/sql/sqlbuilder"
 	. "github.com/onsi/gomega"
-	"k8s.io/klog"
 )
 
 func TestWith(t *testing.T) {
@@ -31,7 +30,6 @@ func TestWith(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "WITH\na AS (\n  SELECT * FROM demo.A\n),\nb AS (\n  SELECT * FROM demo.B\n)\n"
-		klog.Infof("sql expect:\n%s\nresult:\n%s\n", ept, res)
 		Expect(res).To(Equal(ept))
 	})
 	t.Run("table AS name", func(t *testing.T) {
@@ -54,7 +52,6 @@ func TestWith(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "WITH\n(\n  SELECT * FROM demo.A\n) AS a,\n(\n  SELECT * FROM demo.B\n) AS b\n"
-		klog.Infof("sql expect:\n%s\nresult:\n%s\n", ept, res)
 		Expect(res).To(Equal(ept))
 	})
 }
@@ -77,11 +74,9 @@ func TestSelect(t *testing.T) {
 	Expect(err).Should(Succeed())
 	res := buff.String()
 	ept := "SELECT\n  ?,\n  max(y+?) AS max_y\n"
-	klog.Infof("expect:\n%s\nresult:\n%s\n", ept, res)
 	Expect(res).To(Equal(ept))
 	resArgs := argWriter.Args
 	eptArgs := []sqlbuilder.Arg{"x", 2}
-	klog.Infof("arg expect:\n%+v\nresult:\n%+v\n", eptArgs, resArgs)
 	Expect(resArgs).To(Equal(eptArgs))
 }
 
@@ -97,11 +92,9 @@ func TestFrom(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "FROM demo_table\n"
-		klog.Infof("expect:\n%s\nresult:\n%s\n", ept, res)
 		Expect(res).To(Equal(ept))
 		resArgs := argWriter.Args
 		eptArgs := make([]sqlbuilder.Arg, 0)
-		klog.Infof("arg expect:\n%+v\nresult:\n%+v\n", eptArgs, resArgs)
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("from sub query", func(t *testing.T) {
@@ -125,11 +118,9 @@ func TestFrom(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "FROM (\n  SELECT\n    max(x) AS max_x,\n    max(y) AS max_y\n  FROM demo_table\n)\n"
-		klog.Infof("expect:\n%s\nresult:\n%s\n", ept, res)
 		Expect(res).To(Equal(ept))
 		resArgs := argWriter.Args
 		eptArgs := make([]sqlbuilder.Arg, 0)
-		klog.Infof("arg expect:\n%+v\nresult:\n%+v\n", eptArgs, resArgs)
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 }
@@ -177,7 +168,6 @@ func TestDQL(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "WITH\na AS (\n  SELECT * FROM demo.A\n),\nb AS (\n  SELECT * FROM demo.B\n)\nSELECT\n  max(x) AS max_x,\n  max(y) AS max_y\nFROM demo\nWHERE\n  x >= 2\n  AND y != 'a'\nGROUP BY x\nORDER BY y\nLIMIT 1\nQWERTY\nasdfgh\n"
-		klog.Infof("expect:\n%s\nresult:\n%s\n", ept, res)
 		Expect(res).To(Equal(ept))
 	})
 	t.Run("without space", func(t *testing.T) {
@@ -221,7 +211,6 @@ func TestDQL(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "WITH a AS ( SELECT * FROM demo.A ), b AS ( SELECT * FROM demo.B ) SELECT max(x) AS max_x, max(y) AS max_y FROM demo WHERE x >= 2 AND y != 'a' GROUP BY x ORDER BY y LIMIT 1 QWERTY asdfgh "
-		klog.Infof("expect:\n%s\nresult:\n%s\n", ept, res)
 		Expect(res).To(Equal(ept))
 	})
 }
