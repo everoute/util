@@ -152,8 +152,8 @@ func TestDQL(t *testing.T) {
 				Name: "demo",
 			},
 			Where: []sqlbuilder.Condition{
-				sqlbuilder.NewSimpleClause(sqlbuilder.DontNewline, "x >= 2"),
-				sqlbuilder.NewSimpleClause(sqlbuilder.DontNewline, "y != 'a'"),
+				sqlbuilder.NewCondition("x >= 2"),
+				sqlbuilder.NewCondition("y != 'a'"),
 			},
 			Group: sqlbuilder.MakeGroupby("x"),
 			Order: sqlbuilder.MakeOrderby("y"),
@@ -195,8 +195,8 @@ func TestDQL(t *testing.T) {
 				Name: "demo",
 			},
 			Where: []sqlbuilder.Condition{
-				sqlbuilder.NewSimpleClause(sqlbuilder.DontNewline, "x >= 2"),
-				sqlbuilder.NewSimpleClause(sqlbuilder.DontNewline, "y != 'a'"),
+				sqlbuilder.NewCondition("x >= 2"),
+				sqlbuilder.NewCondition("y != 'a'"),
 			},
 			Group: sqlbuilder.MakeGroupby("x"),
 			Order: sqlbuilder.MakeOrderby("y"),

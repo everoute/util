@@ -45,11 +45,11 @@ const (
 	DontNewline = false
 )
 
+type CustomClause func(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error
+
 func NewCustomClause(fn func(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error) CustomClause {
 	return fn
 }
-
-type CustomClause func(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error
 
 func (c CustomClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
 	return c(sqlWriter, argWriter, level)

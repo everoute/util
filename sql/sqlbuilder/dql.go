@@ -84,12 +84,16 @@ func (c *whereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, leve
 				if err != nil {
 					return err
 				}
-				err = c.Parse(sqlWriter, argWriter, 0)
+				err = c.Parse(sqlWriter, argWriter)
 				if err != nil {
 					return err
 				}
 			} else {
-				err = c.Parse(sqlWriter, argWriter, NextLevel(level))
+				err = WriteSpace(sqlWriter, NextLevel(level))
+				if err != nil {
+					return err
+				}
+				err = c.Parse(sqlWriter, argWriter)
 				if err != nil {
 					return err
 				}
@@ -221,10 +225,6 @@ const (
 type NamedTable struct {
 	Name  string
 	Table Table
-}
-
-type Condition interface {
-	Clause
 }
 
 type With interface {

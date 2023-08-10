@@ -27,8 +27,10 @@ func newFixedBuilder(cap int) *fixedBuilder {
 
 func (b *fixedBuilder) WriteString(s string) (n int, err error) {
 	if len(s)+b.size > b.cap {
+		b.size = b.cap
 		return b.builder.WriteString(s[0 : b.cap-b.size])
 	}
+	b.size += len(s)
 	return b.builder.WriteString(s)
 }
 
@@ -137,6 +139,103 @@ func TestAddLevel(t *testing.T) {
 		sqlWriter := newFixedBuilder(2)
 		var argWriter = NewArgWriter(0)
 		err := c.Parse(sqlWriter, argWriter, 0)
+		Expect(err).ShouldNot(Succeed())
+	})
+}
+
+func TestWriteString(t *testing.T) {
+	RegisterTestingT(t)
+	t.Run("write susccess", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(3)
+		err := sqlbuilder.WriteString(sqlWriter, "123")
+		Expect(err).Should(Succeed())
+		Expect(sqlWriter.String()).Should(Equal("123"))
+	})
+	t.Run("write failure", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(2)
+		err := sqlbuilder.WriteString(sqlWriter, "123")
+		Expect(err).ShouldNot(Succeed())
+	})
+	t.Run("write twice susccess", func(t *testing.T) {
+		var err error
+		sqlWriter := newFixedBuilder(6)
+		err = sqlbuilder.WriteString(sqlWriter, "123")
+		Expect(err).Should(Succeed())
+		err = sqlbuilder.WriteString(sqlWriter, "456")
+		Expect(err).Should(Succeed())
+		Expect(sqlWriter.String()).Should(Equal("123456"))
+	})
+	t.Run("write twice failure", func(t *testing.T) {
+		var err error
+		sqlWriter := newFixedBuilder(3)
+		err = sqlbuilder.WriteString(sqlWriter, "123")
+		Expect(err).Should(Succeed())
+		err = sqlbuilder.WriteString(sqlWriter, "456")
+		Expect(err).ShouldNot(Succeed())
+	})
+}
+
+func TestWriteStringWithSpace(t *testing.T) {
+	RegisterTestingT(t)
+	t.Run("write without space susccess", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(3)
+		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", sqlbuilder.Format)
+		Expect(err).Should(Succeed())
+		Expect(sqlWriter.String()).Should(Equal("123"))
+	})
+	t.Run("write without space failure", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(2)
+		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", sqlbuilder.Format)
+		Expect(err).ShouldNot(Succeed())
+	})
+
+	t.Run("write compact susccess", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(3)
+		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", sqlbuilder.Compact)
+		Expect(err).Should(Succeed())
+		Expect(sqlWriter.String()).Should(Equal("123"))
+	})
+	t.Run("write compact space failure", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(2)
+		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", sqlbuilder.Compact)
+		Expect(err).ShouldNot(Succeed())
+	})
+	t.Run("write with space susccess", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(5)
+		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 1)
+		Expect(err).Should(Succeed())
+		Expect(sqlWriter.String()).Should(Equal("  123"))
+	})
+	t.Run("write with space failure 1", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(1)
+		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 1)
+		Expect(err).ShouldNot(Succeed())
+	})
+	t.Run("write with space failure 2", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(2)
+		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 1)
+		Expect(err).ShouldNot(Succeed())
+	})
+	t.Run("write with many space susccess", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(7)
+		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 2)
+		Expect(err).Should(Succeed())
+		Expect(sqlWriter.String()).Should(Equal("    123"))
+	})
+	t.Run("write with many space failure", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(4)
+		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 2)
+		Expect(err).ShouldNot(Succeed())
+	})
+	t.Run("write with more space susccess", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(67)
+		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 32)
+		Expect(err).Should(Succeed())
+		Expect(sqlWriter.String()).Should(Equal(strings.Repeat("  ", 32) + "123"))
+	})
+	t.Run("write with more space failure", func(t *testing.T) {
+		sqlWriter := newFixedBuilder(1)
+		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 32)
 		Expect(err).ShouldNot(Succeed())
 	})
 }
