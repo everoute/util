@@ -6,19 +6,61 @@ import (
 
 // Data query language
 type DQL struct {
-	With   With
-	Select Select
-	From   From
-	Where  []Condition
-	Group  Group
-	Order  Order
-	Limit  Limit
+	With       With
+	Select     Select
+	From       From
+	Where      []Condition
+	Group      Group
+	Order      Order
+	Limit      Limit
+	Additional Clauses
 }
 
 func (l *DQL) Clauses() Clauses {
-	cs := make([]Clauses, 0)
-	cs = append(cs)
-	return nil
+	count := 1 // The SELECT clause is MUST.
+	if l.With != nil {
+		count++
+	}
+	if l.From.Valid() {
+		count++
+	}
+	if l.Where != nil {
+		count++
+	}
+	if l.Group != nil {
+		count++
+	}
+	if l.Order != nil {
+		count++
+	}
+	if l.Limit != nil {
+		count++
+	}
+	count += len(l.Additional)
+	cs := make([]Clause, 0, count)
+	if l.With != nil {
+		cs = append(cs, l.With)
+	}
+	cs = append(cs, &l.Select)
+	if l.From.Valid() {
+		cs = append(cs, &l.From)
+	}
+	if l.Where != nil {
+		cs = append(cs, &whereClause{Where: l.Where})
+	}
+	if l.Group != nil {
+		cs = append(cs, l.Group)
+	}
+	if l.Order != nil {
+		cs = append(cs, l.Order)
+	}
+	if l.Limit != nil {
+		cs = append(cs, l.Limit)
+	}
+	if l.Additional != nil {
+		cs = append(cs, l.Additional...)
+	}
+	return cs
 }
 
 type whereClause struct {
@@ -28,22 +70,31 @@ type whereClause struct {
 func (c *whereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
 	var err error
 	if len(c.Where) > 0 {
-		err = WriteStringWithSpace(sqlWriter, "WHERE\n", level)
+		err = WriteStringWithSpace(sqlWriter, "WHERE", level)
+		if err != nil {
+			return err
+		}
+		err = EndLine(sqlWriter, CompactLevel(level))
 		if err != nil {
 			return err
 		}
 		for i, c := range c.Where {
 			if i != 0 {
-				err = WriteStringWithSpace(sqlWriter, "AND ", level+1)
+				err = WriteStringWithSpace(sqlWriter, "AND ", NextLevel(level))
+				if err != nil {
+					return err
+				}
+				err = c.Parse(sqlWriter, argWriter, 0)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = c.Parse(sqlWriter, argWriter, NextLevel(level))
 				if err != nil {
 					return err
 				}
 			}
-			err = c.Parse(sqlWriter, argWriter, 0)
-			if err != nil {
-				return err
-			}
-			err = EndLine(sqlWriter)
+			err = EndLine(sqlWriter, CompactLevel(level))
 			if err != nil {
 				return err
 			}
@@ -53,43 +104,8 @@ func (c *whereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, leve
 }
 
 func (l *DQL) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
-	var err error
-	err = l.With.Parse(sqlWriter, argWriter, level)
-	if err != nil {
-		return err
-	}
-	// Write SELECT clause
-	err = l.Select.Parse(sqlWriter, argWriter, level)
-	if err != nil {
-		return err
-	}
-	// Write From clause
-	err = l.From.Parse(sqlWriter, argWriter, level)
-	if err != nil {
-		return err
-	}
-	// Write Where clause
-	var whereC = whereClause{
-		Where: l.Where,
-	}
-	err = whereC.Parse(sqlWriter, argWriter, level)
-	if err != nil {
-		return err
-	}
-	// Write Group by clause
-	if l.Group != nil {
-		l.Group.Parse(sqlWriter, argWriter, level)
-	}
-	// Write Orger by clause
-	if l.Order != nil {
-		l.Order.Parse(sqlWriter, argWriter, level)
-	}
-	// Write Limit clause
-	if l.Limit != nil {
-		l.Limit.Parse(sqlWriter, argWriter, level)
-	}
-	return nil
-	// return errors.New("not implemented")
+	cs := l.Clauses()
+	return cs.Parse(sqlWriter, argWriter, level)
 }
 
 type Select struct {
@@ -101,17 +117,25 @@ type Select struct {
 func (c *Select) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
 	var err error
 	if len(c.Columns) == 0 {
-		err = WriteStringWithSpace(sqlWriter, "SELECT *\n", level)
+		err = WriteStringWithSpace(sqlWriter, "SELECT *", level)
+		if err != nil {
+			return err
+		}
+		err = EndLine(sqlWriter, CompactLevel(level))
 		if err != nil {
 			return err
 		}
 	} else {
-		err = WriteStringWithSpace(sqlWriter, "SELECT\n", level)
+		err = WriteStringWithSpace(sqlWriter, "SELECT", level)
+		if err != nil {
+			return err
+		}
+		err = EndLine(sqlWriter, CompactLevel(level))
 		if err != nil {
 			return err
 		}
 		for i, col := range c.Columns {
-			err = WriteStringWithSpace(sqlWriter, col, level+1)
+			err = WriteStringWithSpace(sqlWriter, col, NextLevel(level))
 			if err != nil {
 				return err
 			}
@@ -121,7 +145,7 @@ func (c *Select) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int
 					return err
 				}
 			}
-			err = EndLine(sqlWriter)
+			err = EndLine(sqlWriter, CompactLevel(level))
 			if err != nil {
 				return err
 			}
@@ -146,16 +170,27 @@ type From struct {
 func (c *From) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
 	var err error
 	if c.Table != nil {
-		err = WriteStringWithSpace(sqlWriter, "FROM\n", level)
+		err = WriteStringWithSpace(sqlWriter, "FROM (", level)
 		if err != nil {
 			return err
 		}
-		err = c.Table.Parse(sqlWriter, argWriter, level+1)
+		err = EndLine(sqlWriter, CompactLevel(level))
 		if err != nil {
 			return err
 		}
-
-	} else {
+		err = c.Table.Parse(sqlWriter, argWriter, NextLevel(level))
+		if err != nil {
+			return err
+		}
+		err = WriteStringWithSpace(sqlWriter, ")", level)
+		if err != nil {
+			return err
+		}
+		err = EndLine(sqlWriter, CompactLevel(level))
+		if err != nil {
+			return err
+		}
+	} else if c.Valid() {
 		err = WriteStringWithSpace(sqlWriter, "FROM ", level)
 		if err != nil {
 			return err
@@ -164,13 +199,16 @@ func (c *From) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) 
 		if err != nil {
 			return err
 		}
-		err = EndLine(sqlWriter)
+		err = EndLine(sqlWriter, CompactLevel(level))
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
+}
+
+func (c *From) Valid() bool {
+	return c.Table != nil || c.Name != ""
 }
 
 type NamePosition int
@@ -199,9 +237,16 @@ type WithClause struct {
 	NamePosition NamePosition
 }
 
-func (c *WithClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, _ int) error {
+func (c *WithClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+	if !CompactLevel(level) {
+		level = 0
+	}
 	var err error
-	err = WriteString(sqlWriter, "WITH\n")
+	err = WriteString(sqlWriter, "WITH")
+	if err != nil {
+		return err
+	}
+	err = EndLine(sqlWriter, CompactLevel(level))
 	if err != nil {
 		return err
 	}
@@ -211,11 +256,15 @@ func (c *WithClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, _ int
 			if err != nil {
 				return err
 			}
-			err = WriteString(sqlWriter, " AS (\n")
+			err = WriteString(sqlWriter, " AS (")
 			if err != nil {
 				return err
 			}
-			err = t.Table.Parse(sqlWriter, argWriter, 1)
+			err = EndLine(sqlWriter, CompactLevel(level))
+			if err != nil {
+				return err
+			}
+			err = t.Table.Parse(sqlWriter, argWriter, NextLevel(level))
 			if err != nil {
 				return err
 			}
@@ -224,7 +273,11 @@ func (c *WithClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, _ int
 				return err
 			}
 		} else {
-			err = WriteString(sqlWriter, "(\n")
+			err = WriteString(sqlWriter, "(")
+			if err != nil {
+				return err
+			}
+			err = EndLine(sqlWriter, CompactLevel(level))
 			if err != nil {
 				return err
 			}
@@ -247,7 +300,7 @@ func (c *WithClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, _ int
 				return err
 			}
 		}
-		err = EndLine(sqlWriter)
+		err = EndLine(sqlWriter, CompactLevel(level))
 		if err != nil {
 			return err
 		}
@@ -259,34 +312,22 @@ type Group interface {
 	Clause
 }
 
-func MakeGroupby(customize bool, value string, args ...Arg) Group {
-	if customize {
-		return NewSimpleClause(value+"\n", args...)
-	} else {
-		return NewSimpleClause("GROUP BY "+value+"\n", args...)
-	}
+func MakeGroupby(value string, args ...Arg) Group {
+	return NewSimpleClause(AutoNewline, "GROUP BY "+value, args...)
 }
 
 type Order interface {
 	Clause
 }
 
-func MakeOrderby(customize bool, value string, args ...Arg) Order {
-	if customize {
-		return NewSimpleClause(value+"\n", args...)
-	} else {
-		return NewSimpleClause("ORDER BY "+value+"\n", args...)
-	}
+func MakeOrderby(value string, args ...Arg) Order {
+	return NewSimpleClause(AutoNewline, "ORDER BY "+value, args...)
 }
 
 type Limit interface {
 	Clause
 }
 
-func MakeLimit(customize bool, value string, args ...Arg) Order {
-	if customize {
-		return NewSimpleClause(value+"\n", args...)
-	} else {
-		return NewSimpleClause("LIMIT "+value+"\n", args...)
-	}
+func MakeLimit(value string, args ...Arg) Order {
+	return NewSimpleClause(AutoNewline, "LIMIT "+value, args...)
 }
