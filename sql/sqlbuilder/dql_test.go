@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/everoute/util/sql/sqlbuilder"
 	. "github.com/onsi/gomega"
+
+	"github.com/everoute/util/sql/sqlbuilder"
 )
 
 func TestWith(t *testing.T) {

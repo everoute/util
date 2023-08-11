@@ -64,9 +64,9 @@ func (c CustomClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, leve
 	return c(sqlWriter, argWriter, level)
 }
 
-func NewSimpleClause(autoEndline bool, SQL string, args ...Arg) Clause {
+func NewSimpleClause(autoEndline bool, sql string, args ...Arg) Clause {
 	return &SimpleClause{
-		SQL:         SQL,
+		SQL:         sql,
 		Args:        args,
 		AutoEndline: autoEndline,
 	}

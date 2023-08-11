@@ -7,8 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/everoute/util/sql/sqlbuilder"
 	. "github.com/onsi/gomega"
+
+	"github.com/everoute/util/sql/sqlbuilder"
 )
 
 type fixedBuilder struct {
@@ -23,6 +24,21 @@ func newFixedBuilder(cap int) *fixedBuilder {
 		size:    0,
 		cap:     cap,
 	}
+}
+
+type ArgWriter struct {
+	Args []sqlbuilder.Arg
+}
+
+func NewArgWriter(cap int) *ArgWriter {
+	return &ArgWriter{
+		Args: make([]sqlbuilder.Arg, 0, cap),
+	}
+}
+
+func (w *ArgWriter) WriteArg(arg sqlbuilder.Arg) error {
+	w.Args = append(w.Args, arg)
+	return nil
 }
 
 func (b *fixedBuilder) WriteString(s string) (n int, err error) {
