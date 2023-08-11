@@ -6,8 +6,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/everoute/util/pool"
 	. "github.com/onsi/gomega"
+
+	"github.com/everoute/util/pool"
 )
 
 func TestStdPool(t *testing.T) {
