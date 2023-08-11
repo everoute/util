@@ -11,6 +11,7 @@ const (
 	Space = " "
 )
 
+// End the line with EOL or Space
 func EndLine(sqlWriter io.StringWriter, withSpace bool) error {
 	if withSpace {
 		if n, err := sqlWriter.WriteString(Space); err != nil {
@@ -28,8 +29,11 @@ func EndLine(sqlWriter io.StringWriter, withSpace bool) error {
 	return nil
 }
 
+// Write indentation with space.
+// If you want to add indentation when writing a string, then WriteStringWithSpace is a better choice.
 func WriteSpace(sqlWriter io.StringWriter, level int) error {
-	if level == -1 {
+	// Redundant judgments will be optimized in GetSpace.
+	if CompactLevel(level) {
 		return nil
 	}
 	space := GetSpace(level)
@@ -41,8 +45,11 @@ func WriteSpace(sqlWriter io.StringWriter, level int) error {
 	return nil
 }
 
+// Get the Spaces corresponding to the level.
+// And custom the indentation strategy is not supported currently.
+// When you want to write indentation, you should always call WriteSpace instead of GetSpace.
 func GetSpace(level int) string {
-	if level < 0 {
+	if CompactLevel(level) {
 		return ""
 	}
 	if level >= 0 && level < 32 {

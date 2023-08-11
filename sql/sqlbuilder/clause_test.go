@@ -134,6 +134,19 @@ func TestAddLevel(t *testing.T) {
 		eptArgs := []sqlbuilder.Arg{1, "2"}
 		Expect(resArgs).To(Equal(eptArgs))
 	})
+	t.Run("change to compact", func(t *testing.T) {
+		c := sqlbuilder.AddClauseLevel(sqlbuilder.NewSimpleClause(sqlbuilder.AutoNewline, "abc", 1, "2"), sqlbuilder.Compact)
+		buff := bytes.NewBufferString("")
+		var argWriter = NewArgWriter(0)
+		err := c.Parse(buff, argWriter, 0)
+		Expect(err).Should(Succeed())
+		res := buff.String()
+		ept := "abc "
+		Expect(res).To(Equal(ept))
+		resArgs := argWriter.Args
+		eptArgs := []sqlbuilder.Arg{1, "2"}
+		Expect(resArgs).To(Equal(eptArgs))
+	})
 	t.Run("on error", func(t *testing.T) {
 		c := sqlbuilder.AddClauseLevel(sqlbuilder.NewSimpleClause(sqlbuilder.AutoNewline, "abc", 1, "2"), 1)
 		sqlWriter := newFixedBuilder(2)

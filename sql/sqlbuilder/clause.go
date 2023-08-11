@@ -3,32 +3,40 @@ package sqlbuilder
 import (
 	"fmt"
 	"io"
+	"math"
 )
 
 /*
 The clause in sql
-level: the level
+sqlWriter: A interface implemented WriteString, the SQL statements will be wrote into it.
+argWriter: A interface implemented WriteArg, the arguments will be written in the same order as the SQL.
+level: The level describes the indent level at the beginning of each line, the number of indented Spaces is level*2.
+Note: The tool does not check whether the parameters match the parameters of the SQL, because different databases support different formats， please check it manually.
 */
 type Clause interface {
 	Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error
 }
 
 const (
-	Format  = 0
-	Compact = -1
+	// The default value of the level parameter when parsing the SQL.
+	Format  = 0           // Format the SQL
+	Compact = math.MinInt // Do not format the SQL
 )
 
+// If you need to increase indentation, get the next Level value with it.
 func NextLevel(level int) int {
-	if level == -1 {
-		return -1
+	if CompactLevel(level) {
+		return Compact
 	}
 	return level + 1
 }
 
+// Determine whether the level value in compact mode
 func CompactLevel(level int) bool {
 	return level < 0
 }
 
+// The substitute of []Clause, it implemented a Parse method
 type Clauses []Clause
 
 func (cs *Clauses) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {

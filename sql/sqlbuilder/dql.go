@@ -4,7 +4,8 @@ import (
 	"io"
 )
 
-// Data query language
+// The template of Data Query Language
+// It is also possible to implement DQL through Clauses
 type DQL struct {
 	With       With
 	Select     Select
@@ -234,8 +235,8 @@ func parseFromSubTable(table Clause, sqlWriter io.StringWriter, argWriter ArgWri
 type NamePosition int
 
 const (
-	NameFirst = 0
-	NameAfter = 1
+	NameFirst = 0 // name AS (SELECT ...)
+	NameAfter = 1 // (SELECT ...) AS name
 )
 
 type NamedTable struct {
