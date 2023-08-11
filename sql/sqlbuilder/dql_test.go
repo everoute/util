@@ -144,8 +144,8 @@ func TestDQL(t *testing.T) {
 			},
 			From: sqlbuilder.FromName("demo_table"),
 			Where: []sqlbuilder.Condition{
-				sqlbuilder.NewCondition("x >= 2"),
-				sqlbuilder.NewCondition("y != 'a'"),
+				sqlbuilder.NewCondition("x >= @x", 1),
+				sqlbuilder.NewCondition("y != @y", "2"),
 			},
 			Group: sqlbuilder.MakeGroupby("x"),
 			Order: sqlbuilder.MakeOrderby("y"),
@@ -156,11 +156,15 @@ func TestDQL(t *testing.T) {
 			},
 		}
 		buff := bytes.NewBufferString("")
-		err := dql.Parse(buff, nil, sqlbuilder.Format)
+		var argWriter = NewArgWriter(0)
+		err := dql.Parse(buff, argWriter, sqlbuilder.Format)
 		Expect(err).Should(Succeed())
 		res := buff.String()
-		ept := "WITH\na AS (\n  SELECT * FROM demo.A\n),\nb AS (\n  SELECT * FROM demo.B\n)\nSELECT\n  max(x) AS max_x,\n  max(y) AS max_y\nFROM demo_table\nWHERE\n  x >= 2\n  AND y != 'a'\nGROUP BY x\nORDER BY y\nLIMIT 1\nQWERTY\nasdfgh\n"
+		ept := "WITH\na AS (\n  SELECT * FROM demo.A\n),\nb AS (\n  SELECT * FROM demo.B\n)\nSELECT\n  max(x) AS max_x,\n  max(y) AS max_y\nFROM demo_table\nWHERE\n  x >= @x\n  AND y != @y\nGROUP BY x\nORDER BY y\nLIMIT 1\nQWERTY\nasdfgh\n"
 		Expect(res).To(Equal(ept))
+		resArgs := argWriter.Args
+		eptArgs := []sqlbuilder.Arg{1, "2"}
+		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("without space", func(t *testing.T) {
 		dql := sqlbuilder.DQL{

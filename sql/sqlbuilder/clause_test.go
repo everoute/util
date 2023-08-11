@@ -156,6 +156,26 @@ func TestAddLevel(t *testing.T) {
 	})
 }
 
+func TestGetSpace(t *testing.T) {
+	RegisterTestingT(t)
+	const singleSpace = "  " // Same as the singleSpace in sqlbuilder/clause.go
+	t.Run("compact", func(t *testing.T) {
+		Expect(sqlbuilder.GetSpace(sqlbuilder.Compact)).Should(Equal(""))
+	})
+	t.Run("one space", func(t *testing.T) {
+		Expect(sqlbuilder.GetSpace(1)).Should(Equal(singleSpace))
+	})
+	t.Run("two spaces", func(t *testing.T) {
+		Expect(sqlbuilder.GetSpace(2)).Should(Equal(singleSpace + singleSpace))
+	})
+	t.Run("optimized spaces", func(t *testing.T) {
+		Expect(sqlbuilder.GetSpace(31)).Should(Equal(strings.Repeat(singleSpace, 31)))
+	})
+	t.Run("unoptimized spaces", func(t *testing.T) {
+		Expect(sqlbuilder.GetSpace(32)).Should(Equal(strings.Repeat(singleSpace, 32)))
+	})
+}
+
 func TestWriteString(t *testing.T) {
 	RegisterTestingT(t)
 	t.Run("write susccess", func(t *testing.T) {

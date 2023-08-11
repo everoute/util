@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strings"
 )
 
 /*
@@ -131,4 +132,65 @@ func WriteStringWithSpace(writer io.StringWriter, str string, level int) error {
 		return fmt.Errorf("write string failed, expect: %d, real: %d", len(str), n)
 	}
 	return nil
+}
+
+const (
+	EOL   = "\n"
+	Space = " "
+)
+
+// End the line with EOL or Space
+func EndLine(sqlWriter io.StringWriter, withSpace bool) error {
+	if withSpace {
+		if n, err := sqlWriter.WriteString(Space); err != nil {
+			return err
+		} else if n != 1 {
+			return fmt.Errorf("write endline failed")
+		}
+		return nil
+	}
+	if n, err := sqlWriter.WriteString(EOL); err != nil {
+		return err
+	} else if n != 1 {
+		return fmt.Errorf("write endline failed")
+	}
+	return nil
+}
+
+// Write indentation with space.
+// If you want to add indentation when writing a string, then WriteStringWithSpace is a better choice.
+func WriteSpace(sqlWriter io.StringWriter, level int) error {
+	// Redundant judgments will be optimized in GetSpace.
+	if CompactLevel(level) {
+		return nil
+	}
+	space := GetSpace(level)
+	if n, err := sqlWriter.WriteString(space); err != nil {
+		return err
+	} else if n != len(space) {
+		return fmt.Errorf("write space(level:%d) failed", level)
+	}
+	return nil
+}
+
+const (
+	singleSpace       = "  "
+	lenSingleSpace    = len(singleSpace)
+	optimizeSpaces    = "                                                              "
+	lenOptimizeSpaces = len(optimizeSpaces)
+	maxOptimizeLevel  = lenOptimizeSpaces / lenSingleSpace
+)
+
+// Get the Spaces corresponding to the level.
+// And custom the indentation strategy is not supported currently.
+// When you want to write indentation, you should always call WriteSpace instead of GetSpace.
+func GetSpace(level int) string {
+	if CompactLevel(level) {
+		return ""
+	}
+	// Optimize the vast majority of scenarios
+	if level >= 0 && level <= maxOptimizeLevel {
+		return optimizeSpaces[:level*lenSingleSpace]
+	}
+	return strings.Repeat(singleSpace, level)
 }
