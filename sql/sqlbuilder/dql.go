@@ -10,7 +10,7 @@ type DQL struct {
 	With       With
 	Select     Select
 	From       From
-	Where      []Condition
+	Where      WhereClause
 	Group      Group
 	Order      Order
 	Limit      Limit
@@ -25,7 +25,7 @@ func (l *DQL) Clauses() Clauses {
 	if l.From.Valid() {
 		count++
 	}
-	if l.Where != nil {
+	if l.Where.Valid() {
 		count++
 	}
 	if l.Group != nil {
@@ -46,8 +46,8 @@ func (l *DQL) Clauses() Clauses {
 	if l.From.Valid() {
 		cs = append(cs, l.From)
 	}
-	if l.Where != nil {
-		cs = append(cs, &whereClause{Where: l.Where})
+	if l.Where.Valid() {
+		cs = append(cs, l.Where)
 	}
 	if l.Group != nil {
 		cs = append(cs, l.Group)
@@ -64,13 +64,17 @@ func (l *DQL) Clauses() Clauses {
 	return cs
 }
 
-type whereClause struct {
-	Where []Condition
+type WhereClause struct {
+	Conditions []Condition
 }
 
-func (c *whereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+func (c WhereClause) Valid() bool {
+	return c.Conditions != nil
+}
+
+func (c WhereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
 	var err error
-	if len(c.Where) > 0 {
+	if len(c.Conditions) > 0 {
 		err = WriteStringWithSpace(sqlWriter, "WHERE", level)
 		if err != nil {
 			return err
@@ -79,7 +83,7 @@ func (c *whereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, leve
 		if err != nil {
 			return err
 		}
-		for i, c := range c.Where {
+		for i, c := range c.Conditions {
 			if i != 0 {
 				err = WriteStringWithSpace(sqlWriter, "AND ", NextLevel(level))
 				if err != nil {
@@ -163,34 +167,76 @@ func (c *Select) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int
 	return nil
 }
 
+type NamePosition int
+
+const (
+	NameFirst = 0 // name AS (SELECT ...)
+	NameAfter = 1 // (SELECT ...) AS name
+)
+
+type Table struct {
+	Clause       Clause
+	Name         string
+	NamePosition NamePosition
+}
+
+func (c Table) Valid() bool {
+	return c.Clause != nil || c.Name != ""
+}
+
+func TableByName(name string) Table {
+	return Table{Name: name}
+}
+
+func TableByClause(clause Clause) Table {
+	return Table{Clause: clause}
+}
+
+func NameAsTable(name string, table Clause) Table {
+	return Table{
+		Clause:       table,
+		Name:         name,
+		NamePosition: NameFirst,
+	}
+}
+
+func TableAsName(table Clause, name string) Table {
+	return Table{
+		Clause:       table,
+		Name:         name,
+		NamePosition: NameAfter,
+	}
+}
+
 type From struct {
-	Table Clause
-	Name  string
+	Table Table
 }
 
 func (c From) Valid() bool {
-	return c.Name != "" || c.Table != nil
-}
-
-func FromName(name string) From {
-	return From{Name: name}
-}
-
-func FromTable(table Clause) From {
-	return From{Table: table}
+	return c.Table.Valid()
 }
 
 func (c From) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
-	if c.Name != "" {
-		return parseFromTableName(c.Name, sqlWriter, argWriter, level)
+	if c.Table.Clause != nil && c.Table.Name != "" {
+		switch c.Table.NamePosition {
+		case NameFirst:
+			return ParseNameFirst(c.Table.Name, c.Table.Clause, sqlWriter, argWriter, level)
+		case NameAfter:
+			return ParseNameAfter(c.Table.Name, c.Table.Clause, sqlWriter, argWriter, level)
+		default:
+			panic("bad NamePosition")
+		}
 	}
-	if c.Table != nil {
-		return parseFromSubTable(c.Table, sqlWriter, argWriter, level)
+	if c.Table.Clause != nil {
+		return ParseSubTable(c.Table.Clause, sqlWriter, argWriter, level)
+	}
+	if c.Table.Name != "" {
+		return ParseTableName(c.Table.Name, sqlWriter, argWriter, level)
 	}
 	return nil
 }
 
-func parseFromTableName(name string, sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+func ParseTableName(name string, sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
 	var err error
 	err = WriteStringWithSpace(sqlWriter, "FROM ", level)
 	if err != nil {
@@ -207,7 +253,7 @@ func parseFromTableName(name string, sqlWriter io.StringWriter, argWriter ArgWri
 	return nil
 }
 
-func parseFromSubTable(table Clause, sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+func ParseSubTable(table Clause, sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
 	var err error
 	err = WriteStringWithSpace(sqlWriter, "FROM (", level)
 	if err != nil {
@@ -232,16 +278,66 @@ func parseFromSubTable(table Clause, sqlWriter io.StringWriter, argWriter ArgWri
 	return nil
 }
 
-type NamePosition int
+func ParseNameFirst(name string, clause Clause, sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+	var err error
+	err = WriteStringWithSpace(sqlWriter, "FROM ", level)
+	if err != nil {
+		return err
+	}
+	err = WriteString(sqlWriter, name)
+	if err != nil {
+		return err
+	}
+	err = WriteString(sqlWriter, " AS (")
+	if err != nil {
+		return err
+	}
+	err = EndLine(sqlWriter, CompactLevel(level))
+	if err != nil {
+		return err
+	}
+	err = clause.Parse(sqlWriter, argWriter, NextLevel(level))
+	if err != nil {
+		return err
+	}
+	err = WriteString(sqlWriter, ")")
+	if err != nil {
+		return err
+	}
+	err = EndLine(sqlWriter, CompactLevel(level))
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
-const (
-	NameFirst = 0 // name AS (SELECT ...)
-	NameAfter = 1 // (SELECT ...) AS name
-)
-
-type NamedTable struct {
-	Name  string
-	Table Clause
+func ParseNameAfter(name string, clause Clause, sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+	var err error
+	err = WriteStringWithSpace(sqlWriter, "FROM (", level)
+	if err != nil {
+		return err
+	}
+	err = EndLine(sqlWriter, CompactLevel(level))
+	if err != nil {
+		return err
+	}
+	err = clause.Parse(sqlWriter, argWriter, NextLevel(level))
+	if err != nil {
+		return err
+	}
+	err = WriteString(sqlWriter, ") AS ")
+	if err != nil {
+		return err
+	}
+	err = WriteString(sqlWriter, name)
+	if err != nil {
+		return err
+	}
+	err = EndLine(sqlWriter, CompactLevel(level))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type With interface {
@@ -250,8 +346,7 @@ type With interface {
 
 // WithClause generage WITH clause in SQL, its level arguments are always 0.
 type WithClause struct {
-	Tables       []NamedTable
-	NamePosition NamePosition
+	Tables []Table
 }
 
 func (c *WithClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
@@ -268,44 +363,54 @@ func (c *WithClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level
 		return err
 	}
 	for i, t := range c.Tables {
-		if c.NamePosition == NameFirst {
-			err = WriteString(sqlWriter, t.Name)
-			if err != nil {
-				return err
-			}
-			err = WriteString(sqlWriter, " AS (")
-			if err != nil {
-				return err
-			}
-			err = EndLine(sqlWriter, CompactLevel(level))
-			if err != nil {
-				return err
-			}
-			err = t.Table.Parse(sqlWriter, argWriter, NextLevel(level))
-			if err != nil {
-				return err
-			}
-			err = WriteString(sqlWriter, ")")
-			if err != nil {
-				return err
+		if t.Clause != nil {
+			switch t.NamePosition {
+			case NameFirst:
+				err = WriteString(sqlWriter, t.Name)
+				if err != nil {
+					return err
+				}
+				err = WriteString(sqlWriter, " AS (")
+				if err != nil {
+					return err
+				}
+				err = EndLine(sqlWriter, CompactLevel(level))
+				if err != nil {
+					return err
+				}
+				err = t.Clause.Parse(sqlWriter, argWriter, NextLevel(level))
+				if err != nil {
+					return err
+				}
+				err = WriteString(sqlWriter, ")")
+				if err != nil {
+					return err
+				}
+			case NameAfter:
+				err = WriteString(sqlWriter, "(")
+				if err != nil {
+					return err
+				}
+				err = EndLine(sqlWriter, CompactLevel(level))
+				if err != nil {
+					return err
+				}
+				err = t.Clause.Parse(sqlWriter, argWriter, 1)
+				if err != nil {
+					return err
+				}
+				err = WriteString(sqlWriter, ") AS ")
+				if err != nil {
+					return err
+				}
+				err = WriteString(sqlWriter, t.Name)
+				if err != nil {
+					return err
+				}
+			default:
+				panic("bad NamePosition")
 			}
 		} else {
-			err = WriteString(sqlWriter, "(")
-			if err != nil {
-				return err
-			}
-			err = EndLine(sqlWriter, CompactLevel(level))
-			if err != nil {
-				return err
-			}
-			err = t.Table.Parse(sqlWriter, argWriter, 1)
-			if err != nil {
-				return err
-			}
-			err = WriteString(sqlWriter, ") AS ")
-			if err != nil {
-				return err
-			}
 			err = WriteString(sqlWriter, t.Name)
 			if err != nil {
 				return err
