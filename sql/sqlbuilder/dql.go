@@ -65,16 +65,16 @@ func (l *DQL) Clauses() Clauses {
 }
 
 type WhereClause struct {
-	Where []Condition
+	Conditions []Condition
 }
 
 func (c WhereClause) Valid() bool {
-	return c.Where != nil
+	return c.Conditions != nil
 }
 
 func (c WhereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
 	var err error
-	if len(c.Where) > 0 {
+	if len(c.Conditions) > 0 {
 		err = WriteStringWithSpace(sqlWriter, "WHERE", level)
 		if err != nil {
 			return err
@@ -83,7 +83,7 @@ func (c WhereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level
 		if err != nil {
 			return err
 		}
-		for i, c := range c.Where {
+		for i, c := range c.Conditions {
 			if i != 0 {
 				err = WriteStringWithSpace(sqlWriter, "AND ", NextLevel(level))
 				if err != nil {
