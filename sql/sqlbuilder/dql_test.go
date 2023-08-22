@@ -10,8 +10,8 @@ import (
 )
 
 func TestWith(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("name AS table", func(t *testing.T) {
+		RegisterTestingT(t)
 		var c = sqlbuilder.WithClause{
 			Tables: []sqlbuilder.Table{
 				sqlbuilder.NameAsTable(
@@ -33,6 +33,7 @@ func TestWith(t *testing.T) {
 		Expect(res).To(Equal(ept))
 	})
 	t.Run("table AS name", func(t *testing.T) {
+		RegisterTestingT(t)
 		var c = sqlbuilder.WithClause{
 			Tables: []sqlbuilder.Table{
 				sqlbuilder.TableAsName(
@@ -54,6 +55,7 @@ func TestWith(t *testing.T) {
 		Expect(res).To(Equal(ept))
 	})
 	t.Run("name only", func(t *testing.T) {
+		RegisterTestingT(t)
 		var c = sqlbuilder.WithClause{
 			Tables: []sqlbuilder.Table{
 				sqlbuilder.TableByName("a"),
@@ -71,8 +73,8 @@ func TestWith(t *testing.T) {
 }
 
 func TestSelect(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("SELECT *", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.Select{}
 		buff := bytes.NewBufferString("")
 		var argWriter = NewArgWriter(0)
@@ -86,6 +88,7 @@ func TestSelect(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("SELECT ...", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.Select{
 			Columns: []string{
 				"?",
@@ -110,8 +113,8 @@ func TestSelect(t *testing.T) {
 }
 
 func TestFrom(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("from table name", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.From{sqlbuilder.TableByName("demo_table")}
 		buff := bytes.NewBufferString("")
 		var argWriter = NewArgWriter(0)
@@ -125,6 +128,7 @@ func TestFrom(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("from sub query", func(t *testing.T) {
+		RegisterTestingT(t)
 		dql := sqlbuilder.DQL{
 			Select: sqlbuilder.Select{
 				Columns: []string{
@@ -147,6 +151,7 @@ func TestFrom(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("from name AS table", func(t *testing.T) {
+		RegisterTestingT(t)
 		dql := sqlbuilder.DQL{
 			Select: sqlbuilder.Select{
 				Columns: []string{
@@ -169,6 +174,7 @@ func TestFrom(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("from table AS name", func(t *testing.T) {
+		RegisterTestingT(t)
 		dql := sqlbuilder.DQL{
 			Select: sqlbuilder.Select{
 				Columns: []string{
@@ -193,8 +199,8 @@ func TestFrom(t *testing.T) {
 }
 
 func TestDQL(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("with space", func(t *testing.T) {
+		RegisterTestingT(t)
 		dql := sqlbuilder.DQL{
 			With: &sqlbuilder.WithClause{
 				Tables: []sqlbuilder.Table{
@@ -241,6 +247,7 @@ func TestDQL(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("without space", func(t *testing.T) {
+		RegisterTestingT(t)
 		dql := sqlbuilder.DQL{
 			With: &sqlbuilder.WithClause{
 				Tables: []sqlbuilder.Table{

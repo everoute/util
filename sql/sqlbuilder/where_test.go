@@ -52,8 +52,8 @@ func TestCustomCondition(t *testing.T) {
 }
 
 func TestAndCondition(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("save brackets", func(t *testing.T) {
+		RegisterTestingT(t)
 		c1 := sqlbuilder.NewCondition("col1=@col1", 1)
 		c2 := sqlbuilder.NewCondition("col2=@col2", "2")
 		c := sqlbuilder.And(c1, c2, sqlbuilder.SaveBrackets)
@@ -69,6 +69,7 @@ func TestAndCondition(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("omit brackets", func(t *testing.T) {
+		RegisterTestingT(t)
 		c1 := sqlbuilder.NewCondition("col1=@col1", 1)
 		c2 := sqlbuilder.NewCondition("col2=@col2", "2")
 		c := sqlbuilder.And(c1, c2, sqlbuilder.OmitBrackets)
@@ -86,8 +87,8 @@ func TestAndCondition(t *testing.T) {
 }
 
 func TestOrCondition(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("save brackets", func(t *testing.T) {
+		RegisterTestingT(t)
 		c1 := sqlbuilder.NewCondition("col1=@col1", 1)
 		c2 := sqlbuilder.NewCondition("col2=@col2", "2")
 		c := sqlbuilder.Or(c1, c2, sqlbuilder.SaveBrackets)
@@ -103,6 +104,7 @@ func TestOrCondition(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("omit brackets", func(t *testing.T) {
+		RegisterTestingT(t)
 		c1 := sqlbuilder.NewCondition("col1=@col1", 1)
 		c2 := sqlbuilder.NewCondition("col2=@col2", "2")
 		c := sqlbuilder.Or(c1, c2, sqlbuilder.OmitBrackets)
@@ -120,8 +122,8 @@ func TestOrCondition(t *testing.T) {
 }
 
 func TestNotCondition(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("save brackets", func(t *testing.T) {
+		RegisterTestingT(t)
 		sub := sqlbuilder.NewCondition("col=@col", 1)
 		c := sqlbuilder.Not(sub, sqlbuilder.SaveBrackets)
 		buff := bytes.NewBufferString("")
@@ -136,6 +138,7 @@ func TestNotCondition(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("omit brackets", func(t *testing.T) {
+		RegisterTestingT(t)
 		sub := sqlbuilder.NewCondition("col=@col", 1)
 		c := sqlbuilder.Not(sub, sqlbuilder.OmitBrackets)
 		buff := bytes.NewBufferString("")

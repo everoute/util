@@ -55,8 +55,8 @@ func (b *fixedBuilder) String() string {
 }
 
 func TestCustomClause(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("normal", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.NewCustomClause(func(sqlWriter io.StringWriter, argWriter sqlbuilder.ArgWriter, level int) error {
 			sqlWriter.WriteString("abc")
 			argWriter.WriteArg(1)
@@ -75,6 +75,7 @@ func TestCustomClause(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("on error", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.NewCustomClause(func(sqlWriter io.StringWriter, argWriter sqlbuilder.ArgWriter, level int) error {
 			return errors.New("demo error")
 		})
@@ -86,8 +87,8 @@ func TestCustomClause(t *testing.T) {
 }
 
 func TestSimpleClause(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("auto new line", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.NewSimpleClause(sqlbuilder.AutoNewline, "abc", 1, "2")
 		buff := bytes.NewBufferString("")
 		var argWriter = NewArgWriter(0)
@@ -101,6 +102,7 @@ func TestSimpleClause(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("don't new line", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.NewSimpleClause(sqlbuilder.DontNewline, "abc", 1, "2")
 		buff := bytes.NewBufferString("")
 		var argWriter = NewArgWriter(0)
@@ -114,6 +116,7 @@ func TestSimpleClause(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("on error", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.NewSimpleClause(sqlbuilder.AutoNewline, "abc", 1, "2")
 		sqlWriter := newFixedBuilder(2)
 		var argWriter = NewArgWriter(0)
@@ -123,8 +126,8 @@ func TestSimpleClause(t *testing.T) {
 }
 
 func TestAddLevel(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("auto new line", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.AddClauseLevel(sqlbuilder.NewSimpleClause(sqlbuilder.AutoNewline, "abc", 1, "2"), 1)
 		buff := bytes.NewBufferString("")
 		var argWriter = NewArgWriter(0)
@@ -138,6 +141,7 @@ func TestAddLevel(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("don't new line", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.AddClauseLevel(sqlbuilder.NewSimpleClause(sqlbuilder.DontNewline, "abc", 1, "2"), 1)
 		buff := bytes.NewBufferString("")
 		var argWriter = NewArgWriter(0)
@@ -151,6 +155,7 @@ func TestAddLevel(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("change to compact", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.AddClauseLevel(sqlbuilder.NewSimpleClause(sqlbuilder.AutoNewline, "abc", 1, "2"), sqlbuilder.Compact)
 		buff := bytes.NewBufferString("")
 		var argWriter = NewArgWriter(0)
@@ -164,6 +169,7 @@ func TestAddLevel(t *testing.T) {
 		Expect(resArgs).To(Equal(eptArgs))
 	})
 	t.Run("on error", func(t *testing.T) {
+		RegisterTestingT(t)
 		c := sqlbuilder.AddClauseLevel(sqlbuilder.NewSimpleClause(sqlbuilder.AutoNewline, "abc", 1, "2"), 1)
 		sqlWriter := newFixedBuilder(2)
 		var argWriter = NewArgWriter(0)
@@ -173,39 +179,45 @@ func TestAddLevel(t *testing.T) {
 }
 
 func TestGetSpace(t *testing.T) {
-	RegisterTestingT(t)
 	const singleSpace = "  " // Same as the singleSpace in sqlbuilder/clause.go
 	t.Run("compact", func(t *testing.T) {
+		RegisterTestingT(t)
 		Expect(sqlbuilder.GetSpace(sqlbuilder.Compact)).Should(Equal(""))
 	})
 	t.Run("one space", func(t *testing.T) {
+		RegisterTestingT(t)
 		Expect(sqlbuilder.GetSpace(1)).Should(Equal(singleSpace))
 	})
 	t.Run("two spaces", func(t *testing.T) {
+		RegisterTestingT(t)
 		Expect(sqlbuilder.GetSpace(2)).Should(Equal(singleSpace + singleSpace))
 	})
 	t.Run("optimized spaces", func(t *testing.T) {
+		RegisterTestingT(t)
 		Expect(sqlbuilder.GetSpace(31)).Should(Equal(strings.Repeat(singleSpace, 31)))
 	})
 	t.Run("unoptimized spaces", func(t *testing.T) {
+		RegisterTestingT(t)
 		Expect(sqlbuilder.GetSpace(32)).Should(Equal(strings.Repeat(singleSpace, 32)))
 	})
 }
 
 func TestWriteString(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("write susccess", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(3)
 		err := sqlbuilder.WriteString(sqlWriter, "123")
 		Expect(err).Should(Succeed())
 		Expect(sqlWriter.String()).Should(Equal("123"))
 	})
 	t.Run("write failure", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(2)
 		err := sqlbuilder.WriteString(sqlWriter, "123")
 		Expect(err).ShouldNot(Succeed())
 	})
 	t.Run("write twice susccess", func(t *testing.T) {
+		RegisterTestingT(t)
 		var err error
 		sqlWriter := newFixedBuilder(6)
 		err = sqlbuilder.WriteString(sqlWriter, "123")
@@ -215,6 +227,7 @@ func TestWriteString(t *testing.T) {
 		Expect(sqlWriter.String()).Should(Equal("123456"))
 	})
 	t.Run("write twice failure", func(t *testing.T) {
+		RegisterTestingT(t)
 		var err error
 		sqlWriter := newFixedBuilder(3)
 		err = sqlbuilder.WriteString(sqlWriter, "123")
@@ -225,64 +238,74 @@ func TestWriteString(t *testing.T) {
 }
 
 func TestWriteStringWithSpace(t *testing.T) {
-	RegisterTestingT(t)
 	t.Run("write without space susccess", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(3)
 		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", sqlbuilder.Format)
 		Expect(err).Should(Succeed())
 		Expect(sqlWriter.String()).Should(Equal("123"))
 	})
 	t.Run("write without space failure", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(2)
 		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", sqlbuilder.Format)
 		Expect(err).ShouldNot(Succeed())
 	})
 
 	t.Run("write compact susccess", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(3)
 		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", sqlbuilder.Compact)
 		Expect(err).Should(Succeed())
 		Expect(sqlWriter.String()).Should(Equal("123"))
 	})
 	t.Run("write compact space failure", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(2)
 		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", sqlbuilder.Compact)
 		Expect(err).ShouldNot(Succeed())
 	})
 	t.Run("write with space susccess", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(5)
 		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 1)
 		Expect(err).Should(Succeed())
 		Expect(sqlWriter.String()).Should(Equal("  123"))
 	})
 	t.Run("write with space failure 1", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(1)
 		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 1)
 		Expect(err).ShouldNot(Succeed())
 	})
 	t.Run("write with space failure 2", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(2)
 		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 1)
 		Expect(err).ShouldNot(Succeed())
 	})
 	t.Run("write with many space susccess", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(7)
 		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 2)
 		Expect(err).Should(Succeed())
 		Expect(sqlWriter.String()).Should(Equal("    123"))
 	})
 	t.Run("write with many space failure", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(4)
 		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 2)
 		Expect(err).ShouldNot(Succeed())
 	})
 	t.Run("write with more space susccess", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(67)
 		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 32)
 		Expect(err).Should(Succeed())
 		Expect(sqlWriter.String()).Should(Equal(strings.Repeat("  ", 32) + "123"))
 	})
 	t.Run("write with more space failure", func(t *testing.T) {
+		RegisterTestingT(t)
 		sqlWriter := newFixedBuilder(1)
 		err := sqlbuilder.WriteStringWithSpace(sqlWriter, "123", 32)
 		Expect(err).ShouldNot(Succeed())
