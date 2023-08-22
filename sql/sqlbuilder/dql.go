@@ -216,6 +216,18 @@ func (c From) Valid() bool {
 	return c.Table.Valid()
 }
 
+func FromTable(clause Clause) From {
+	return From{
+		Table: TableByClause(clause),
+	}
+}
+
+func FromTableName(name string) From {
+	return From{
+		Table: TableByName(name),
+	}
+}
+
 func (c From) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
 	if c.Table.Clause != nil && c.Table.Name != "" {
 		switch c.Table.NamePosition {
