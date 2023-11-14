@@ -12,6 +12,7 @@ type DQL struct {
 	From       From
 	Where      WhereClause
 	Group      Group
+	Having     HavingClause
 	Order      Order
 	Limit      Limit
 	Additional Clauses
@@ -52,6 +53,9 @@ func (l *DQL) Clauses() Clauses {
 	if l.Group != nil {
 		cs = append(cs, l.Group)
 	}
+	if l.Having.Valid() {
+		cs = append(cs, l.Having)
+	}
 	if l.Order != nil {
 		cs = append(cs, l.Order)
 	}
@@ -64,18 +68,10 @@ func (l *DQL) Clauses() Clauses {
 	return cs
 }
 
-type WhereClause struct {
-	Conditions []Condition
-}
-
-func (c WhereClause) Valid() bool {
-	return c.Conditions != nil
-}
-
-func (c WhereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+func buildConditions(name string, conditions []Condition, sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
 	var err error
-	if len(c.Conditions) > 0 {
-		err = WriteStringWithSpace(sqlWriter, "WHERE", level)
+	if len(conditions) > 0 {
+		err = WriteStringWithSpace(sqlWriter, name, level)
 		if err != nil {
 			return err
 		}
@@ -83,7 +79,7 @@ func (c WhereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level
 		if err != nil {
 			return err
 		}
-		for i, c := range c.Conditions {
+		for i, c := range conditions {
 			if i != 0 {
 				err = WriteStringWithSpace(sqlWriter, "AND ", NextLevel(level))
 				if err != nil {
@@ -110,6 +106,30 @@ func (c WhereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level
 		}
 	}
 	return nil
+}
+
+type WhereClause struct {
+	Conditions []Condition
+}
+
+func (c WhereClause) Valid() bool {
+	return c.Conditions != nil
+}
+
+func (c WhereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+	return buildConditions("WHERE", c.Conditions, sqlWriter, argWriter, level)
+}
+
+type HavingClause struct {
+	Conditions []Condition
+}
+
+func (c HavingClause) Valid() bool {
+	return c.Conditions != nil
+}
+
+func (c HavingClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+	return buildConditions("HAVING", c.Conditions, sqlWriter, argWriter, level)
 }
 
 func (l *DQL) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {

@@ -84,6 +84,36 @@ func TestAndCondition(t *testing.T) {
 		eptArgs := []sqlbuilder.Arg{1, "2"}
 		Expect(resArgs).To(Equal(eptArgs))
 	})
+	t.Run("l is nil", func(t *testing.T) {
+		RegisterTestingT(t)
+		c2 := sqlbuilder.NewCondition("col2=@col2", "2")
+		c := sqlbuilder.And(nil, c2, sqlbuilder.SaveBrackets)
+		buff := bytes.NewBufferString("")
+		var argWriter = NewArgWriter(0)
+		err := c.Parse(buff, argWriter)
+		Expect(err).Should(Succeed())
+		res := buff.String()
+		ept := "(col2=@col2)"
+		Expect(res).To(Equal(ept))
+		resArgs := argWriter.Args
+		eptArgs := []sqlbuilder.Arg{"2"}
+		Expect(resArgs).To(Equal(eptArgs))
+	})
+	t.Run("r is nil", func(t *testing.T) {
+		RegisterTestingT(t)
+		c1 := sqlbuilder.NewCondition("col1=@col1", 1)
+		c := sqlbuilder.And(c1, nil, sqlbuilder.SaveBrackets)
+		buff := bytes.NewBufferString("")
+		var argWriter = NewArgWriter(0)
+		err := c.Parse(buff, argWriter)
+		Expect(err).Should(Succeed())
+		res := buff.String()
+		ept := "(col1=@col1)"
+		Expect(res).To(Equal(ept))
+		resArgs := argWriter.Args
+		eptArgs := []sqlbuilder.Arg{1}
+		Expect(resArgs).To(Equal(eptArgs))
+	})
 }
 
 func TestOrCondition(t *testing.T) {
@@ -119,6 +149,36 @@ func TestOrCondition(t *testing.T) {
 		eptArgs := []sqlbuilder.Arg{1, "2"}
 		Expect(resArgs).To(Equal(eptArgs))
 	})
+	t.Run("l is nil", func(t *testing.T) {
+		RegisterTestingT(t)
+		c2 := sqlbuilder.NewCondition("col2=@col2", "2")
+		c := sqlbuilder.Or(nil, c2, sqlbuilder.SaveBrackets)
+		buff := bytes.NewBufferString("")
+		var argWriter = NewArgWriter(0)
+		err := c.Parse(buff, argWriter)
+		Expect(err).Should(Succeed())
+		res := buff.String()
+		ept := "(col2=@col2)"
+		Expect(res).To(Equal(ept))
+		resArgs := argWriter.Args
+		eptArgs := []sqlbuilder.Arg{"2"}
+		Expect(resArgs).To(Equal(eptArgs))
+	})
+	t.Run("r is nil", func(t *testing.T) {
+		RegisterTestingT(t)
+		c1 := sqlbuilder.NewCondition("col1=@col1", 1)
+		c := sqlbuilder.Or(c1, nil, sqlbuilder.SaveBrackets)
+		buff := bytes.NewBufferString("")
+		var argWriter = NewArgWriter(0)
+		err := c.Parse(buff, argWriter)
+		Expect(err).Should(Succeed())
+		res := buff.String()
+		ept := "(col1=@col1)"
+		Expect(res).To(Equal(ept))
+		resArgs := argWriter.Args
+		eptArgs := []sqlbuilder.Arg{1}
+		Expect(resArgs).To(Equal(eptArgs))
+	})
 }
 
 func TestNotCondition(t *testing.T) {
@@ -147,6 +207,54 @@ func TestNotCondition(t *testing.T) {
 		Expect(err).Should(Succeed())
 		res := buff.String()
 		ept := "NOT col=@col"
+		Expect(res).To(Equal(ept))
+		resArgs := argWriter.Args
+		eptArgs := []sqlbuilder.Arg{1}
+		Expect(resArgs).To(Equal(eptArgs))
+	})
+}
+
+func TestBracket(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		RegisterTestingT(t)
+		sub := sqlbuilder.NewCondition("col=@col", 1)
+		c := sqlbuilder.Bracket(sub)
+		buff := bytes.NewBufferString("")
+		var argWriter = NewArgWriter(0)
+		err := c.Parse(buff, argWriter)
+		Expect(err).Should(Succeed())
+		res := buff.String()
+		ept := "(col=@col)"
+		Expect(res).To(Equal(ept))
+		resArgs := argWriter.Args
+		eptArgs := []sqlbuilder.Arg{1}
+		Expect(resArgs).To(Equal(eptArgs))
+	})
+	t.Run("save bracket", func(t *testing.T) {
+		RegisterTestingT(t)
+		sub := sqlbuilder.NewCondition("col=@col", 1)
+		c := sqlbuilder.BracketIf(sub, sqlbuilder.SaveBrackets)
+		buff := bytes.NewBufferString("")
+		var argWriter = NewArgWriter(0)
+		err := c.Parse(buff, argWriter)
+		Expect(err).Should(Succeed())
+		res := buff.String()
+		ept := "(col=@col)"
+		Expect(res).To(Equal(ept))
+		resArgs := argWriter.Args
+		eptArgs := []sqlbuilder.Arg{1}
+		Expect(resArgs).To(Equal(eptArgs))
+	})
+	t.Run("omit bracket", func(t *testing.T) {
+		RegisterTestingT(t)
+		sub := sqlbuilder.NewCondition("col=@col", 1)
+		c := sqlbuilder.BracketIf(sub, sqlbuilder.OmitBrackets)
+		buff := bytes.NewBufferString("")
+		var argWriter = NewArgWriter(0)
+		err := c.Parse(buff, argWriter)
+		Expect(err).Should(Succeed())
+		res := buff.String()
+		ept := "col=@col"
 		Expect(res).To(Equal(ept))
 		resArgs := argWriter.Args
 		eptArgs := []sqlbuilder.Arg{1}

@@ -44,19 +44,51 @@ func (c CustomCondition) Parse(sqlWriter io.StringWriter, argWriter ArgWriter) e
 }
 
 const (
-	OmitBrackets = true
-	SaveBrackets = false
+	SaveBrackets = true
+	OmitBrackets = false
 )
 
+type BracketedCondition struct {
+	Condition Condition
+}
+
+func (c BracketedCondition) Parse(sqlWriter io.StringWriter, argWriter ArgWriter) error {
+	var err error
+	err = WriteString(sqlWriter, "(")
+	if err != nil {
+		return err
+	}
+	err = c.Condition.Parse(sqlWriter, argWriter)
+	if err != nil {
+		return err
+	}
+	err = WriteString(sqlWriter, ")")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func Bracket(condition Condition) Condition {
+	return BracketedCondition{Condition: condition}
+}
+
+func BracketIf(condition Condition, bracket bool) Condition {
+	if bracket {
+		return BracketedCondition{Condition: condition}
+	}
+	return condition
+}
+
 type AndCondition struct {
-	L            Condition
-	R            Condition
-	OmitBrackets bool
+	L       Condition
+	R       Condition
+	Bracket bool
 }
 
 func (c AndCondition) Parse(sqlWriter io.StringWriter, argWriter ArgWriter) error {
 	var err error
-	if !c.OmitBrackets {
+	if c.Bracket {
 		err = WriteString(sqlWriter, "(")
 		if err != nil {
 			return err
@@ -74,7 +106,7 @@ func (c AndCondition) Parse(sqlWriter io.StringWriter, argWriter ArgWriter) erro
 	if err != nil {
 		return err
 	}
-	if !c.OmitBrackets {
+	if c.Bracket {
 		err = WriteString(sqlWriter, ")")
 		if err != nil {
 			return err
@@ -83,23 +115,32 @@ func (c AndCondition) Parse(sqlWriter io.StringWriter, argWriter ArgWriter) erro
 	return nil
 }
 
-func And(l, r Condition, omitBrackets bool) AndCondition {
-	return AndCondition{
-		L:            l,
-		R:            r,
-		OmitBrackets: omitBrackets,
+func And(l, r Condition, bracket bool) Condition {
+	switch {
+	case l != nil && r != nil:
+		return AndCondition{
+			L:       l,
+			R:       r,
+			Bracket: bracket,
+		}
+	case l != nil && r == nil:
+		return BracketIf(l, bracket)
+	case l == nil && r != nil:
+		return BracketIf(r, bracket)
+	default:
+		return nil
 	}
 }
 
 type OrCondition struct {
-	L            Condition
-	R            Condition
-	OmitBrackets bool
+	L       Condition
+	R       Condition
+	Bracket bool
 }
 
 func (c OrCondition) Parse(sqlWriter io.StringWriter, argWriter ArgWriter) error {
 	var err error
-	if !c.OmitBrackets {
+	if c.Bracket {
 		err = WriteString(sqlWriter, "(")
 		if err != nil {
 			return err
@@ -117,7 +158,7 @@ func (c OrCondition) Parse(sqlWriter io.StringWriter, argWriter ArgWriter) error
 	if err != nil {
 		return err
 	}
-	if !c.OmitBrackets {
+	if c.Bracket {
 		err = WriteString(sqlWriter, ")")
 		if err != nil {
 			return err
@@ -126,22 +167,31 @@ func (c OrCondition) Parse(sqlWriter io.StringWriter, argWriter ArgWriter) error
 	return nil
 }
 
-func Or(l, r Condition, omitBrackets bool) OrCondition {
-	return OrCondition{
-		L:            l,
-		R:            r,
-		OmitBrackets: omitBrackets,
+func Or(l, r Condition, bracket bool) Condition {
+	switch {
+	case l != nil && r != nil:
+		return OrCondition{
+			L:       l,
+			R:       r,
+			Bracket: bracket,
+		}
+	case l != nil && r == nil:
+		return BracketIf(l, bracket)
+	case l == nil && r != nil:
+		return BracketIf(r, bracket)
+	default:
+		return nil
 	}
 }
 
 type NotCondition struct {
-	Condition    Condition
-	OmitBrackets bool
+	Condition Condition
+	Bracket   bool
 }
 
 func (c NotCondition) Parse(sqlWriter io.StringWriter, argWriter ArgWriter) error {
 	var err error
-	if !c.OmitBrackets {
+	if c.Bracket {
 		err = WriteString(sqlWriter, "(")
 		if err != nil {
 			return err
@@ -155,7 +205,7 @@ func (c NotCondition) Parse(sqlWriter io.StringWriter, argWriter ArgWriter) erro
 	if err != nil {
 		return err
 	}
-	if !c.OmitBrackets {
+	if c.Bracket {
 		err = WriteString(sqlWriter, ")")
 		if err != nil {
 			return err
@@ -164,9 +214,9 @@ func (c NotCondition) Parse(sqlWriter io.StringWriter, argWriter ArgWriter) erro
 	return nil
 }
 
-func Not(condition Condition, omitBrackets bool) NotCondition {
+func Not(condition Condition, bracket bool) Condition {
 	return NotCondition{
-		Condition:    condition,
-		OmitBrackets: omitBrackets,
+		Condition: condition,
+		Bracket:   bracket,
 	}
 }
