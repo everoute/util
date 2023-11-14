@@ -12,6 +12,7 @@ type DQL struct {
 	From       From
 	Where      WhereClause
 	Group      Group
+	Having     HavingClause
 	Order      Order
 	Limit      Limit
 	Additional Clauses
@@ -52,6 +53,9 @@ func (l *DQL) Clauses() Clauses {
 	if l.Group != nil {
 		cs = append(cs, l.Group)
 	}
+	if l.Having.Valid() {
+		cs = append(cs, l.Having)
+	}
 	if l.Order != nil {
 		cs = append(cs, l.Order)
 	}
@@ -76,6 +80,54 @@ func (c WhereClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level
 	var err error
 	if len(c.Conditions) > 0 {
 		err = WriteStringWithSpace(sqlWriter, "WHERE", level)
+		if err != nil {
+			return err
+		}
+		err = EndLine(sqlWriter, CompactLevel(level))
+		if err != nil {
+			return err
+		}
+		for i, c := range c.Conditions {
+			if i != 0 {
+				err = WriteStringWithSpace(sqlWriter, "AND ", NextLevel(level))
+				if err != nil {
+					return err
+				}
+				err = c.Parse(sqlWriter, argWriter)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = WriteSpace(sqlWriter, NextLevel(level))
+				if err != nil {
+					return err
+				}
+				err = c.Parse(sqlWriter, argWriter)
+				if err != nil {
+					return err
+				}
+			}
+			err = EndLine(sqlWriter, CompactLevel(level))
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type HavingClause struct {
+	Conditions []Condition
+}
+
+func (c HavingClause) Valid() bool {
+	return c.Conditions != nil
+}
+
+func (c HavingClause) Parse(sqlWriter io.StringWriter, argWriter ArgWriter, level int) error {
+	var err error
+	if len(c.Conditions) > 0 {
+		err = WriteStringWithSpace(sqlWriter, "HAVING", level)
 		if err != nil {
 			return err
 		}
