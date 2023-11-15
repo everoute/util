@@ -146,3 +146,21 @@ func Last[E any](s []E) (r E) {
 	}
 	return s[l-1]
 }
+
+func Map[S, D any](s []S, fn func(S) D) []D {
+	l := len(s)
+	newSlice := make([]D, 0, l)
+	for i := 0; i < l; i++ {
+		newSlice = append(newSlice, fn(s[i]))
+	}
+	return newSlice
+}
+
+func MapWithIdx[S, D any](s []S, fn func(S, int) D) []D {
+	l := len(s)
+	newSlice := make([]D, 0, l)
+	for i := 0; i < l; i++ {
+		newSlice = append(newSlice, fn(s[i], i))
+	}
+	return newSlice
+}
