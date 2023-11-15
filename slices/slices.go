@@ -131,3 +131,18 @@ func AppendToAny[E any](s1 []any, s2 []E) []any {
 	}
 	return s1
 }
+
+func First[E any](s []E) (r E) {
+	if len(s) == 0 {
+		return
+	}
+	return s[0]
+}
+
+func Last[E any](s []E) (r E) {
+	l := len(s)
+	if l == 0 {
+		return
+	}
+	return s[l-1]
+}
