@@ -1,5 +1,9 @@
 package slices
 
+import (
+	std "slices"
+)
+
 func ToAny[E any](s []E) []any {
 	if s == nil {
 		return nil
@@ -22,12 +26,20 @@ func ToInterface[E any](s []E) []interface{} {
 	return newSlice
 }
 
-func InterfaceToAny(s []interface{}) []any {
+func InterfaceAsAny(s []interface{}) []any {
 	return s
 }
 
-func AnyToInterface(s []any) []interface{} {
+func AnyAsInterface(s []any) []interface{} {
 	return s
+}
+
+func InterfaceToAny(s []interface{}) []any {
+	return std.Clone(([]any)(s))
+}
+
+func AnyToInterface(s []any) []interface{} {
+	return std.Clone(([]interface{})(s))
 }
 
 func FromAny[E any](s []any) []E {
@@ -80,4 +92,42 @@ func FromInterfaceSafe[E any](s []interface{}) ([]E, bool) {
 		newSlice = append(newSlice, e)
 	}
 	return newSlice, true
+}
+
+func Concat[E any](s1, s2 []E) []E {
+	if s1 == nil {
+		return std.Clone(s2)
+	}
+	if s2 == nil {
+		return std.Clone(s1)
+	}
+	newSlice := make([]E, 0, len(s1)+len(s2))
+	newSlice = append(newSlice, s1...)
+	newSlice = append(newSlice, s2...)
+	return newSlice
+}
+
+func AppendAny[E any](s1 []E, s2 []any) []E {
+	for i := range s2 {
+		s1 = append(s1, s2[i].(E))
+	}
+	return s1
+}
+
+func AppendAnySafe[E any](s1 []E, s2 []any) ([]E, bool) {
+	for i := range s2 {
+		e, ok := s2[i].(E)
+		if !ok {
+			return nil, false
+		}
+		s1 = append(s1, e)
+	}
+	return s1, true
+}
+
+func AppendToAny[E any](s1 []any, s2 []E) []any {
+	for i := range s2 {
+		s1 = append(s1, s2[i])
+	}
+	return s1
 }
