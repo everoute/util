@@ -35,11 +35,11 @@ func AnyAsInterface(s []any) []interface{} {
 }
 
 func InterfaceToAny(s []interface{}) []any {
-	return std.Clone(([]any)(s))
+	return std.Clone(InterfaceAsAny(s))
 }
 
 func AnyToInterface(s []any) []interface{} {
-	return std.Clone(([]interface{})(s))
+	return std.Clone(AnyAsInterface(s))
 }
 
 func FromAny[E any](s []any) []E {
