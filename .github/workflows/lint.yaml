@@ -16,7 +16,7 @@ jobs:
 
       - name: setup go with docker
         run: |
-          docker run --rm -v /usr/local:/sys_usr_local golang:1.19 cp -r /usr/local/go /sys_usr_local/
+          docker run --rm -v /usr/local:/sys_usr_local golang:1.25 cp -r /usr/local/go /sys_usr_local/
           echo "PATH=${PATH}:/usr/local/go/bin" >> $GITHUB_ENV
 
       - uses: golangci/golangci-lint-action@v3

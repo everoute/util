@@ -15,6 +15,6 @@ test:
 
 docker-test:
 	$(eval WORKDIR := /go/src/github.com/everoute/util)
-	docker run --rm -iu 0:0 -w $(WORKDIR) -v $(CURDIR):$(WORKDIR) golang:1.19 make test
+	docker run --rm -iu 0:0 -w $(WORKDIR) -v $(CURDIR):$(WORKDIR) golang:1.25 make test
 
 publish:
