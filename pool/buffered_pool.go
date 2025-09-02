@@ -12,22 +12,23 @@ import (
 
 type BufferedPool[T any] struct {
 	pool   Pool[T]
-	buffer []*T // a stack of objects
+	buffer []T // a stack of objects
 	mu     sync.Mutex
 }
 
 func NewBufferedPool[T any](pool Pool[T], bufferSize int) *BufferedPool[T] {
 	return &BufferedPool[T]{
 		pool:   pool,
-		buffer: make([]*T, bufferSize),
+		buffer: make([]T, bufferSize),
 	}
 }
 
-func (p *BufferedPool[T]) Get() *T {
+func (p *BufferedPool[T]) Get() T {
 	p.mu.Lock()
 	if len(p.buffer) > 0 {
 		t := p.buffer[len(p.buffer)-1]
-		p.buffer[len(p.buffer)-1] = nil // avoid garbage collection scan
+		var zero T
+		p.buffer[len(p.buffer)-1] = zero // avoid garbage collection scan
 		p.buffer = p.buffer[:len(p.buffer)-1]
 		p.mu.Unlock()
 		return t
@@ -36,7 +37,7 @@ func (p *BufferedPool[T]) Get() *T {
 	return p.pool.Get()
 }
 
-func (p *BufferedPool[T]) Put(t *T) {
+func (p *BufferedPool[T]) Put(t T) {
 	p.mu.Lock()
 	p.buffer = append(p.buffer, t)
 	p.mu.Unlock()

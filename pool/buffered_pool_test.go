@@ -22,12 +22,12 @@ func TestBufferedPool(t *testing.T) {
 
 	customChan := make(chan *data4096, 1000)
 	var allocCount uint32 = 0
-	p := pool.NewBufferedPool(pool.NewStdPoll[data4096](func() any {
+	p := pool.NewBufferedPool(pool.NewStdPoll[*data4096](func() any {
 		atomic.AddUint32(&allocCount, 1)
 		return new(data4096)
 	}), 1000)
-	var putter pool.Putter[data4096] = p
-	var getter pool.Getter[data4096] = p
+	var putter pool.Putter[*data4096] = p
+	var getter pool.Getter[*data4096] = p
 
 	for i := 0; i < 100; i++ {
 		go func() {
