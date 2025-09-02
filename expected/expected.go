@@ -14,6 +14,7 @@ var (
 	errNilPointer error = errors.New("nil pointer")
 )
 
+// Deprecated: use github.com/samber/mo.Result instead.
 // An Expected object refers to a valid value or an error
 type Expected[T any] struct {
 	value T
