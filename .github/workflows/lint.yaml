@@ -5,7 +5,7 @@ on:
 
 jobs:
   golint:
-    runs-on: self-hosted
+    runs-on: [self-hosted, pod]
     steps:
       - uses: actions/checkout@v3
 
@@ -19,15 +19,18 @@ jobs:
           docker run --rm -v /usr/local:/sys_usr_local golang:1.25 cp -r /usr/local/go /sys_usr_local/
           echo "PATH=${PATH}:/usr/local/go/bin" >> $GITHUB_ENV
 
-      - uses: golangci/golangci-lint-action@v3
+      - uses: golangci/golangci-lint-action@v8
         if: steps.check_files.outputs.files_exists == 'true'
         with:
-          version: v1.52
+          version: v2.4.0
           skip-pkg-cache: true
           skip-build-cache: true # skip cache because of flaky behaviors
+        env:
+          GOPROXY: http://goproxy.smartx.com|https://goproxy.cn|direct
+          GOEXPERIMENT: jsonv2
 
   generate-check:
-    runs-on: self-hosted
+    runs-on: [self-hosted, pod]
     steps:
       - uses: actions/checkout@v3
 
@@ -42,7 +45,7 @@ jobs:
         run: echo "::error::Please run \"make generate\" or \"make docker-generate\" before commit."
 
   commitlint:
-    runs-on: self-hosted
+    runs-on: [self-hosted, pod]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -52,7 +55,7 @@ jobs:
           configFile: .commitlintrc.json
 
   helmlint:
-    runs-on: self-hosted
+    runs-on: [self-hosted, pod]
     steps:
       - uses: actions/checkout@v3
       - uses: andstor/file-existence-action@v2
