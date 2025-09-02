@@ -1,11 +1,11 @@
 package pool
 
 type Putter[T any] interface {
-	Put(*T)
+	Put(T)
 }
 
 type Getter[T any] interface {
-	Get() *T
+	Get() T
 }
 
 type Pool[T any] interface {
